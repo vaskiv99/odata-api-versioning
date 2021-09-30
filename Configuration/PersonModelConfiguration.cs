@@ -6,41 +6,41 @@
 
     public class PersonModelConfiguration : IModelConfiguration
     {
-        private void ConfigureV1( ODataModelBuilder builder )
+        private void ConfigureV1(ODataModelBuilder builder)
         {
-            var person = ConfigureCurrent( builder );
-            person.Ignore( p => p.Email );
-            person.Ignore( p => p.Phone );
+            var person = ConfigureCurrent(builder);
+            person.Ignore(p => p.Email);
+            person.Ignore(p => p.Phone);
         }
 
-        private void ConfigureV2( ODataModelBuilder builder ) => ConfigureCurrent( builder ).Ignore( p => p.Phone );
+        private void ConfigureV2(ODataModelBuilder builder) => ConfigureCurrent(builder).Ignore(p => p.Phone);
 
-        private EntityTypeConfiguration<Person> ConfigureCurrent( ODataModelBuilder builder )
+        private EntityTypeConfiguration<Person> ConfigureCurrent(ODataModelBuilder builder)
         {
-            var person = builder.EntitySet<Person>( "people" ).EntityType;
+            var person = builder.EntitySet<Person>("people").EntityType;
 
-            person.HasKey( p => p.Id );
+            person.HasKey(p => p.Id);
 
             return person;
         }
 
-        public void Apply( ODataModelBuilder builder, ApiVersion apiVersion, string routePrefix )
+        public void Apply(ODataModelBuilder builder, ApiVersion apiVersion, string routePrefix)
         {
-            if ( routePrefix != "api/v{version:apiVersion}" )
+            if (routePrefix != "api/v{version:apiVersion}")
             {
                 return;
             }
 
-            switch ( apiVersion.MajorVersion )
+            switch (apiVersion.MajorVersion)
             {
                 case 1:
-                    ConfigureV1( builder );
+                    ConfigureV1(builder);
                     break;
                 case 2:
-                    ConfigureV2( builder );
+                    ConfigureV2(builder);
                     break;
                 default:
-                    ConfigureCurrent( builder );
+                    ConfigureCurrent(builder);
                     break;
             }
         }

@@ -6,15 +6,15 @@ using Microsoft.OpenApi.Models;
 
 namespace Microsoft.Examples
 {
+    using AspNetCore.Builder;
+    using Extensions.DependencyInjection;
     using Microsoft.AspNet.OData.Builder;
     using Microsoft.AspNet.OData.Extensions;
-    using AspNetCore.Builder;
     using Microsoft.Extensions.Configuration;
-    using Extensions.DependencyInjection;
 
     public class Startup
     {
-        public Startup( IConfiguration configuration )
+        public Startup(IConfiguration configuration)
         {
             Configuration = configuration;
         }
@@ -22,7 +22,7 @@ namespace Microsoft.Examples
         public IConfiguration Configuration { get; }
 
         // This method gets called by the runtime. Use this method to add services to the container.
-        public void ConfigureServices( IServiceCollection services )
+        public void ConfigureServices(IServiceCollection services)
         {
             services.AddControllers();
             services.AddApiVersioning(
@@ -30,20 +30,19 @@ namespace Microsoft.Examples
                 {
                     // reporting api versions will return the headers "api-supported-versions" and "api-deprecated-versions"
                     options.ReportApiVersions = true;
-                } );
+                });
             services.AddOData().EnableApiVersioning();
             services.AddVersionedApiExplorer();
-            services.AddODataApiExplorer(x => x.SubstituteApiVersionInUrl = true );
+            services.AddODataApiExplorer(x => x.SubstituteApiVersionInUrl = true);
 
-            services.AddScoped<IODataFeature>( container => container.GetRequiredService<IHttpContextAccessor>().HttpContext.ODataFeature() );
-            services.AddScoped<IODataQueryValuesExtractor, ODataQueryValuesExtractor>();
+            services.AddScoped<IODataFeature>(container => container.GetRequiredService<IHttpContextAccessor>().HttpContext.ODataFeature());
             services.AddScoped<IODataQueryOptionsSlimBuilder, ODataQueryOptionsSlimBuilder>();
 
-            ConfigureSwaggerService( services );
+            ConfigureSwaggerService(services);
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure( IApplicationBuilder app, VersionedODataModelBuilder modelBuilder )
+        public void Configure(IApplicationBuilder app, VersionedODataModelBuilder modelBuilder)
         {
             app.UseRouting();
             app.UseEndpoints(
@@ -52,40 +51,39 @@ namespace Microsoft.Examples
                     endpoints.MapControllers();
 
 
-                    endpoints.MapVersionedODataRoute( "odata-bypath", "api/v{version:apiVersion}", modelBuilder );
-                } );
+                    endpoints.MapVersionedODataRoute("odata-bypath", "api/v{version:apiVersion}", modelBuilder);
+                });
 
             var provider = app.ApplicationServices.GetRequiredService<IApiVersionDescriptionProvider>();
             app.UseSwagger();
-            app.UseSwaggerUI( c =>
-            {
-                foreach ( var description in provider.ApiVersionDescriptions )
-                {
-                    c.SwaggerEndpoint( $"/swagger/{description.GroupName}/swagger.json", $"REST API v{description.ApiVersion}" );
-                }
-            } );
+            app.UseSwaggerUI(c =>
+           {
+               foreach (var description in provider.ApiVersionDescriptions)
+               {
+                   c.SwaggerEndpoint($"/swagger/{description.GroupName}/swagger.json", $"REST API v{description.ApiVersion}");
+               }
+           });
         }
 
-        public void ConfigureSwaggerService( IServiceCollection services )
+        public void ConfigureSwaggerService(IServiceCollection services)
         {
             var swaggerConfig = new OpenApiInfo
             {
                 Title = "OData API versioned"
             };
 
-            services.AddSwaggerGen( c =>
-            {
-                using var serviceProvider = services.BuildServiceProvider();
-                var provider = serviceProvider.GetRequiredService<IApiVersionDescriptionProvider>();
+            services.AddSwaggerGen(c =>
+           {
+               using var serviceProvider = services.BuildServiceProvider();
+               var provider = serviceProvider.GetRequiredService<IApiVersionDescriptionProvider>();
 
-                foreach ( var description in provider.ApiVersionDescriptions )
-                {
-                    swaggerConfig.Version = description.ApiVersion.ToString();
-                    c.SwaggerDoc( $"{description.GroupName}", swaggerConfig );
-                }
-                c.OperationFilter<SwaggerExtensions.ODataQueryOptionsSlimFilter>( );
-                c.DescribeAllParametersInCamelCase();
-            } );
+               foreach (var description in provider.ApiVersionDescriptions)
+               {
+                   swaggerConfig.Version = description.ApiVersion.ToString();
+                   c.SwaggerDoc($"{description.GroupName}", swaggerConfig);
+               }
+               c.DescribeAllParametersInCamelCase();
+           });
         }
     }
 }
